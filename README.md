@@ -1,2 +1,0 @@
-# moon
-WIP programming language
