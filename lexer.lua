@@ -31,7 +31,7 @@ lexer.lex = function(program)
 			end
 			maketoken("string", string)
 			position = peek + 1
-		elseif char == ":" then
+--[=[		elseif char == ":" then
 			local variable = ""
 			local peek = position + 1
 			while getchar(program, peek) ~= ":" do
@@ -39,7 +39,7 @@ lexer.lex = function(program)
 				peek = peek + 1
 			end
 			maketoken("variable", variable)
-			position = peek + 1
+]=]--			position = peek + 1
 		elseif char == "`" then
 			local number = ""
 			local peek = position + 1
