@@ -1,34 +1,40 @@
 lexer = {}
 
-local function getchar(string, i)
-	return string.sub(string, i, i)
+local tokens = {}
+
+local position = 0
+local peek = 0
+
+local numbers = "0123456789"
+local characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+
+local function getchar(string, position)
+	return string.sub(string, position, position)
+end
+
+
+local function maketoken(typ, value)
+	table.insert(tokens, {typ, value})
 end
 
 lexer.lex = function(program)
-	local programdata = {}
-	local i = 1
-	for i, string.len(program) do
-		local char = getchar(program, i)
-		if char == " " then
-			i = i + 1
-		elseif char == "`" then
-			i = i + 1
-			local number = ""
-			while getchar(program, i) ~= "`" do
-				local digit = getchar(program, i)
-				if (digit >= 0 and digit <= 9) or digit == "." then
-					number = number .. digit
-					i = i + 1
-				else
-					error("Invalid character in `number` value.")
-				end
+	for position, #program do
+		local char = getchar(program, position)
+		if char == "\"" then
+			local string = ""
+			local peek = position + 1
+			while getchar(program, peek) ~= "\"" do
+				string = string .. getchar(program, peek)
+				peek = peek + 1
 			end
-			table.insert(programdata, {"NUMBER", number})
-			i = i + 1
-		elseif char == "@" then
-			i = i + 1
+			maketoken("string", string)
+			position = peek + 1
+		elseif char == ":" then
 			local variable = ""
-			while getchar(program, i) ~= "@" do
+			local peek = position + 1
+			while getchar(program, peek) ~= ":" do
+				variable = variable .. getchar(program, peek)
+				peek = peek + 1
 			end
 		end
 	end
