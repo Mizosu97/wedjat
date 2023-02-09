@@ -1,7 +1,7 @@
-local lexer = dofile("lexer.lua")
+local lexer = dofile("./lexer.lua")
 
 local function readfile(path)
-	local file = io.open(path, rb)
+	local file = io.open(path, "rb")
 	if not file then
 		error("Invalid file path.")
 	end
@@ -12,4 +12,8 @@ end
 
 local program = readfile(arg[1])
 
-print(program)
+local tokens = lexer.lex(program)
+
+for _,token in pairs(tokens) do
+	print("Type: " .. token[1] .. "   Value: " .. token[2])
+end

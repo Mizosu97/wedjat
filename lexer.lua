@@ -5,7 +5,7 @@ local tokens = {}
 local position = 0
 local peek = 0
 
-local numbers = "0123456789"
+local numbers = "0123456789."
 local characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 
 local function getchar(string, position)
@@ -18,7 +18,9 @@ local function maketoken(typ, value)
 end
 
 lexer.lex = function(program)
-	for position, #program do
+	local position = 1
+	local programlength = string.len(program)
+	while position <= programlength do
 		local char = getchar(program, position)
 		if char == "\"" then
 			local string = ""
@@ -36,8 +38,28 @@ lexer.lex = function(program)
 				variable = variable .. getchar(program, peek)
 				peek = peek + 1
 			end
+			maketoken("variable", variable)
+			position = peek + 1
+		elseif char == "`" then
+			local number = ""
+			local peek = position + 1
+			while getchar(program, peek) ~= "`" do
+				number = number .. getchar(program, peek)
+				peek = peek + 1
+			end
+			maketoken("number", number)
+			position = peek + 1
+		elseif char == "[" then
+			local peek = position + 1
+			while getchar(program, peek) ~= "]" do
+				peek = peek + 1
+			end
+			position = peek + 1
+		else
+			position = position + 1
 		end
 	end
+	return tokens
 end
 
 return lexer
