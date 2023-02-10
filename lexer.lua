@@ -31,7 +31,7 @@ lexer.lex = function(program)
 			end
 			maketoken("string", string)
 			position = peek + 1
---[=[		elseif char == ":" then
+		elseif char == ":" then
 			local variable = ""
 			local peek = position + 1
 			while getchar(program, peek) ~= ":" do
@@ -39,7 +39,7 @@ lexer.lex = function(program)
 				peek = peek + 1
 			end
 			maketoken("variable", variable)
-]=]--			position = peek + 1
+			position = peek + 1
 		elseif char == "`" then
 			local number = ""
 			local peek = position + 1
@@ -55,6 +55,45 @@ lexer.lex = function(program)
 				peek = peek + 1
 			end
 			position = peek + 1
+		elseif char == "(" then
+			maketoken("lparen", nil)
+			position = position + 1
+		elseif char == ")" then
+			maketoken("rparen", nil)
+			position = position + 1
+		elseif char == "+" then
+			maketoken("add", nil)
+			position = position + 1
+		elseif char == "-" then
+			maketoken("sub", nil)
+			position = position + 1
+		elseif char == "*" then
+			maketoken("mul", nil)
+			position = position + 1
+		elseif char == "/" then
+			maketoken("div", nil)
+			positon = position + 1
+		elseif char == "=" then
+			if getchar(program, position + 1) == "=" then
+				maketoken("isequalto", nil)
+			else
+				maketoken("equals", nil)
+			end
+			position = position + 1
+		elseif char == ">" then
+			if getchar(program, position + 1) == "=" then
+				maketoken("gthanorequals", nil)
+			else
+				maketoken("greaterthan", nil)
+			end
+			position = position + 1
+		elseif char == "<" then
+			if getchar(program, position + 1) == "=" then
+				maketoken("lthanorequals", nil)
+			else
+				maketoken("lessthan", nil)
+			end
+			positon = position + 1
 		else
 			position = position + 1
 		end
