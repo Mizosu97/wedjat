@@ -1,5 +1,5 @@
-:first number: = `98876`
+:first number: = `98876`;
 
-:first string: = "hi from new wedjat language!"
+:first string: = "hi from new wedjat language!";
 
 [this is a comment]

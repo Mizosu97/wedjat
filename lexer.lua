@@ -94,6 +94,9 @@ lexer.lex = function(program)
 				maketoken("lessthan", nil)
 			end
 			positon = position + 1
+		elseif char == ";" then
+			maketoken("terminator", nil)
+			positon = position + 1
 		else
 			position = position + 1
 		end

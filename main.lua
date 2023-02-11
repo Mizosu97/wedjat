@@ -16,5 +16,11 @@ local program = readfile(arg[1])
 local tokens = lexer.lex(program)
 
 for _,token in pairs(tokens) do
-	print("Type: " .. token[1] .. "   Value: " .. token[2])
+	if token[2] == nil then
+		token2 = "nil"
+	else
+		token2 = token[2]
+	end
+
+	print("Type: " .. token[1] .. "   Value: " .. token2)
 end
