@@ -1,4 +1,5 @@
 local lexer = dofile("./lexer.lua")
+local interpreter = dofile("./interpreter.lua")
 
 local function readfile(path)
 	local file = io.open(path, "rb")
