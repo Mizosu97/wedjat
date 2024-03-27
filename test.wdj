@@ -1,8 +1,8 @@
 > Wedjat programming language structure.
 
-define MyNumber int;
+   define MyNumber int;
 define MyString str;
-define MyOtherString str;
+    define MyOtherString   str; 
 define MyBool bol;
 define MyArray arr;
 define MyBlock blk;
@@ -11,7 +11,7 @@ define UserInput str;
 
 set MyNumber :420:;
 set MyString "This is my string.";
-set MyOtherString yayaya;
+set MyOtherString    yayaya;
 set MyBool *True*;
 set MyArray [:69:, sss, *False*];
 set MyBlock {

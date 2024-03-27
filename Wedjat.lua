@@ -27,11 +27,24 @@ local function CleanJunk(text)
 			final = final .. c
 			lc = c
 			i = i + 1
+		elseif c == "[" and instring ~= true then
+			inarray = true
+			final = final .. c
+			lc = c
+			i = i + 1
+		elseif c == "]" and instring ~= true then
+			inarray = false
+			final = final .. c
+			lc = c
+			i = i + 1
 		elseif c == " " and instring ~= true then
 			if i == 1 then
 				lc = c
 				i = i + 1
 			elseif lc == " " then
+				lc = c
+				i = i + 1
+			elseif inarray == true then
 				lc = c
 				i = i + 1
 			else
@@ -65,4 +78,38 @@ local function CleanJunk(text)
 	return final
 end
 
-print(CleanJunk(source))
+local function FinalTrim(text)
+	local final = ""
+
+	local c = ""
+	local i = 1
+	while i <= #text do
+		c = string.sub(text, i, i)
+		if c == " " then
+			i = i + 1
+		else
+			break
+		end
+	end
+
+	final = string.sub(text, i, #text)
+
+	i = #text
+	while i >= 1 do
+		c = string.sub(text, i, i)
+		if c == " " then
+			i = i - 1
+		else
+			break
+		end
+	end
+
+	final = string.sub(final, 1, i)
+
+	return final
+end
+
+
+source = FinalTrim(CleanJunk(source))
+
+print(source)
