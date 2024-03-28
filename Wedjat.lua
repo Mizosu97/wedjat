@@ -180,27 +180,37 @@ local function getInfo(statement)
 	local i = argstart
 	local instring = false
 	local inblock = false
+	local inarray = false
+	local arraydepth = 0
 	local blockdepth = 0
 	while i <= #statement do
 		c = string.sub(statement, i, i)
 		if c == "\"" then
-			if lc ~= "\\" and inblock ~= true then
+			if lc ~= "\\" and inblock ~= true and inarray ~= true then
 				instring = not instring
 			end
 			carg = carg .. c
-		elseif c == "{" and instring ~= true then
+		elseif c == "{" and instring ~= true and inarray ~= true then
 			inblock = true
 			blockdepth = blockdepth + 1
 			carg = carg .. c
-		elseif c == "}" and instring ~= true then
+		elseif c == "}" and instring ~= true and inarray ~= true then
 			blockdepth = blockdepth - 1
 			if blockdepth == 0 then
 				inblock = false
 			end
 			carg = carg .. c
+		elseif c == "[" and instring ~= true and inblock ~= true then
+			inarray = true
+			arraydepth = arraydepth + 1
+		elseif c == "]" and instring ~= true and inblock ~= true then
+			arraydepth = arraydepth - 1
+			if arraydepth == 0 then
+				inarray = false
+			end
 		elseif c == " " then
-			if inblock ~= true and instring ~= true then
-				table.insert(arguments, carg)
+			if inblock ~= true and instring ~= true and inarray ~= true then
+				table.insert(arguments, {["Content"] = carg, ["Type"] = GetDataType(carg)})
 				carg = ""
 			else
 				carg = carg .. c
@@ -211,7 +221,7 @@ local function getInfo(statement)
 		lc = c
 		i = i + 1
 	end
-	table.insert(arguments, carg)
+	table.insert(arguments, {["Content"] = carg, ["Type"] = GetDataType(carg)})
 
 	return {
 		["CommandName"] = commandname,
@@ -241,10 +251,20 @@ local SuperCleanSource = FinalTrim(CleanSource)
 local Statements = SplitStatements(SuperCleanSource)
 local InstructionSheet = formatStatements(Statements)
 
+local WedjatProgramVariables = {}
+local WedjatUserCommands = {}
+
 local WedjatProgramArguments = {}
 for i = 2, #arg do
 	table.insert(WedjatProgramArguments, arg[i])
 end
+
+
+local WedjatCoreCommands = {
+	["define"] = function(arguments)
+	end
+}
+
 
 
 
@@ -265,7 +285,7 @@ local function printProgramCommands()
 		print("Command " .. ic .. ": " .. i.CommandName)
 		local ai = 1
 		for _,a in ipairs(i.Arguments) do
-			print("     Arg" .. ai .. " | " .. a)
+			print("    Arg" .. ai .. " (type " .. a.Type .. ") | " .. a.Content)
 			ai = ai + 1
 		end
 		ic = ic + 1
@@ -273,4 +293,6 @@ local function printProgramCommands()
 	end
 end
 
+
+printProgramCommands()
 --[=[ Developer Debugging Functions ]=]--
