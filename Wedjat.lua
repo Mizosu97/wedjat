@@ -2,6 +2,7 @@
 
 local Source = ""
 
+--[=[
 local file = io.open(arg[1], "r")
 if file ~= nil then
 	Source = file:read("*all")
@@ -9,7 +10,9 @@ if file ~= nil then
 else
 	os.exit()
 end
+]=]--
 
+Source = io.read("*a")
 
 
 local function CleanJunk(text)
@@ -203,11 +206,13 @@ local function getInfo(statement)
 		elseif c == "[" and instring ~= true and inblock ~= true then
 			inarray = true
 			arraydepth = arraydepth + 1
+			carg = carg .. c
 		elseif c == "]" and instring ~= true and inblock ~= true then
 			arraydepth = arraydepth - 1
 			if arraydepth == 0 then
 				inarray = false
 			end
+			carg = carg .. c
 		elseif c == " " then
 			if inblock ~= true and instring ~= true and inarray ~= true then
 				table.insert(arguments, {["Content"] = carg, ["Type"] = GetDataType(carg)})
@@ -251,7 +256,13 @@ local SuperCleanSource = FinalTrim(CleanSource)
 local Statements = SplitStatements(SuperCleanSource)
 local InstructionSheet = formatStatements(Statements)
 
-local WedjatProgramVariables = {}
+local WedjatProgramVariables = {
+	["__VER"] = {
+		["Name"] = "__VER",
+		["Type"] = "str",
+		["Content"] = "__VER"
+	}
+}
 local WedjatUserCommands = {}
 
 local WedjatProgramArguments = {}
@@ -261,11 +272,44 @@ end
 
 
 local WedjatCoreCommands = {
-	["define"] = function(arguments)
+	["define"] = function(Arguments)
+		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
+			return
+		end
+
+		local variableName = Arguments[1].Content
+		local variableType = Arguments[2].Content
+
+		if WedjatProgramVariables[variableName] then
+			return
+		end
+
+		if variableType ~= "str"
+		and variableType ~= "int"
+		and variableType ~= "arr"
+		and variableType ~= "bol"
+		and variableType ~= "blk"
+		then
+			return
+		end
+
+		WedjatProgramVariables[variableName] = {["Name"] = variableName, ["Type"] = variableType, ["Content"] = ""}
 	end
 }
 
+local function runCommand(command)
+	local CommandName = command.CommandName
+	local Arguments = command.Arguments
+	for _,argument in pairs(Arguments) do
+		if argument.Type == "var" then
+			argument.Content = WedjatProgramVariables[string.sub(argument.Content, 2, #argument.Content - 1)].Content
+		end
+	end
 
+	if WedjatCoreCommands[CommandName] ~= nil then
+		WedjatCoreCommands[CommandName](Arguments)
+	end
+end
 
 
 
