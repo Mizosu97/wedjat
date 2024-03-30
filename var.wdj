@@ -1,5 +1,0 @@
-define myvar str;
-
-set myvar "this is my string";
-
-write (myvar);

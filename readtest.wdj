@@ -1,6 +1,0 @@
-define userInput str;
-
-read userInput;
-
-write "
-> " (userInput);

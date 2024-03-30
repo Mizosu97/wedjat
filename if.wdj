@@ -1,9 +1,0 @@
-define one str;
-definr two str;
-
-set one "fff";
-set two "fff";
-
-if (one) = (two) {
-	write "that shit is equal";
-};

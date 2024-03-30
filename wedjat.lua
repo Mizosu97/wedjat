@@ -2,17 +2,13 @@
 
 local Source = ""
 
---[=[
 local file = io.open(arg[1], "r")
-if file ~= nil then
+if file then
 	Source = file:read("*all")
 	file:close()
 else
 	os.exit()
 end
-]=]--
-
-Source = io.read("*a")
 
 
 local function CleanJunk(text)
@@ -338,7 +334,7 @@ local WedjatCoreCommands = {
 		if variableObject.Type ~= "str" then
 			return
 		end
-		variableObject.Content = io.read("*l")
+		variableObject.Content = tostring(io.read("*l"))
 	end
 }
 
