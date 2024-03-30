@@ -294,6 +294,37 @@ local WedjatCoreCommands = {
 		end
 
 		WedjatProgramVariables[variableName] = {["Name"] = variableName, ["Type"] = variableType, ["Content"] = ""}
+	end,
+	["set"] = function(Arguments)
+		if Arguments[1].Type ~= "str" then
+			return
+		end
+
+		local variableName = Arguments[1].Content
+		local variableObject
+		if WedjatProgramVariables[variableName] == nil then
+			return
+		end
+		variableObject = WedjatProgramVariables[variableName]
+
+		if Arguments[2].Type ~= variableObject.Type then
+			return
+		end
+
+		variableObject.Content = Arguments[2].Content
+	end,
+	["write"] = function(Arguments)
+		for _,argument in ipairs(Arguments) do
+			if argument.Type == "str" then
+				if string.sub(argument.Content, 1, 1) == "\"" then
+					io.write(string.sub(argument.Content, 2, #argument.Content - 1))
+				else
+					io.write(argument.Content)
+				end
+			elseif argument.Type == "int" or argument.Type == "bol" then
+				io.write(string.sub(argument.Content, 2, #argument.Content - 1))
+			end
+		end
 	end
 }
 
@@ -303,6 +334,7 @@ local function runCommand(command)
 	for _,argument in pairs(Arguments) do
 		if argument.Type == "var" then
 			argument.Content = WedjatProgramVariables[string.sub(argument.Content, 2, #argument.Content - 1)].Content
+			argument.Type = GetDataType(argument.Content)
 		end
 	end
 
@@ -338,5 +370,11 @@ local function printProgramCommands()
 end
 
 
-printProgramCommands()
+-- printProgramCommands()
 --[=[ Developer Debugging Functions ]=]--
+
+
+
+for _,i in ipairs(InstructionSheet) do
+	runCommand(i)
+end

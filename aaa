@@ -1,0 +1,16 @@
+> wedjat programming language, written by Ankhikamun
+
+
+define myNum int;
+define myOther int;
+define bruh str;
+
+> the little :: tells the interpreter to treat that argument as an integer rather than a string
+set myNum :69:;
+set myOther :420:;
+
+> all arguments by default are strings, unless certain characters are added to signify otherwise
+set bruh bruhhhhhhhhhh;
+
+> this command simply writes all string, integer, and boolean arguments to the standard output
+write (myNum) " " (myOther) " " (bruh);
