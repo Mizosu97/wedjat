@@ -325,6 +325,20 @@ local WedjatCoreCommands = {
 				io.write(string.sub(argument.Content, 2, #argument.Content - 1))
 			end
 		end
+	end,
+	["read"] = function(Arguments)
+		if Arguments[1].Type ~= "str" then
+			return
+		end
+		local variableName = Arguments[1].Content
+		if WedjatProgramVariables[variableName] == nil then
+			return
+		end
+		local variableObject = WedjatProgramVariables[variableName]
+		if variableObject.Type ~= "str" then
+			return
+		end
+		variableObject.Content = io.read("*l")
 	end
 }
 
