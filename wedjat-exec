@@ -298,17 +298,39 @@ local function cv(v)
 	end
 end
 
+
+local function argumentToLuaObject(Argument)
+	if Argument.Type == "str" then
+		if string.sub(Argument.Content, 1, 1) == "\"" then
+			return string.sub(Argument.Content, 2, #Argument.Content - 1)
+		else
+			return Argument.Content
+		end
+	elseif Argument.Type == "int" then
+		return tonumber(string.sub(Argument.Content, 2, Argumemt.Content - 1))
+	elseif Argument.Type == "bol" then
+		if Argument.Content == "*True*" then
+			return true
+		elseif Argument.Content == "*False*" then
+			return false
+		end
+	else
+		return nil
+	end
+end
+
+
 local WedjatCoreCommands = {
 	["define"] = function(Arguments)
 		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
-			kill("define: ")
+			kill("define: String arguments expected.")
 		end
 
 		local variableName = Arguments[1].Content
 		local variableType = Arguments[2].Content
 
 		if cv(variableName) == true then
-			return
+			kill("define: Variable " .. variableName .. " is already defined.")
 		end
 
 		if variableType ~= "str"
@@ -317,14 +339,14 @@ local WedjatCoreCommands = {
 		and variableType ~= "bol"
 		and variableType ~= "blk"
 		then
-			return
+			kill("define: Unknown variable type \"" .. variableType .. "\" supplied.")
 		end
 
 		WedjatProgramVariables[variableName] = {["Name"] = variableName, ["Type"] = variableType, ["Content"] = ""}
 	end,
 	["set"] = function(Arguments)
 		if Arguments[1].Type ~= "str" then
-			return
+			kill("set: String arguments expected.")
 		end
 
 		local variableName = Arguments[1].Content
@@ -335,7 +357,7 @@ local WedjatCoreCommands = {
 		variableObject = WedjatProgramVariables[variableName]
 
 		if Arguments[2].Type ~= variableObject.Type then
-			return
+			kill("set: Data type incompatability between variable specified and data supplied.")
 		end
 
 		variableObject.Content = Arguments[2].Content
@@ -355,28 +377,43 @@ local WedjatCoreCommands = {
 	end,
 	["read"] = function(Arguments)
 		if Arguments[1].Type ~= "str" then
-			return
+			kill("read: String argument expected.")
 		end
 		local variableName = Arguments[1].Content
-		if WedjatProgramVariables[variableName] == nil then
-			return
+		if cv(variableName) == false then
+			kill("read: Variable " .. variableName .. " does not exist.")
 		end
 		local variableObject = WedjatProgramVariables[variableName]
 		if variableObject.Type ~= "str" then
-			return
+			kill("read: Variable supplied is expected to be compatable with string data.")
 		end
 		variableObject.Content = tostring(io.read("*l"))
 	end,
 	["gettype"] = function(Arguments)
 		if WedjatProgramVariables[Arguments[1].Content] == nil or WedjatProgramVariables[Arguments[1].Content].Type ~= "str" or Arguments[2] == nil then
-			return
+			kill("gettype: Invalid arguments.")
 		end
 
 		WedjatProgramVariables[Arguments[1].Content].Content = Arguments[2].Type
 	end,
 	["math"] = function(Arguments)
+		local equation = ""
+		local variableName = Arguments[1].Content
+		if cv(variableName) == false then
+			kill("math: Variable " .. variableName .. " does not exist.")
+		end
+		local i = 2
+		while i <= #Arguments do
+			local argument = Arguments[i]
+			if argument.Type ~= "str" and argument.Type ~= "int" then
+				kill("math: String or integer arguments expected.")
+			end
+			i = i + 1
+		end
 	end
 }
+
+
 
 local function runCommand(command)
 	local CommandName = command.CommandName
