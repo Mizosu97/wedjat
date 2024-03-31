@@ -1,5 +1,0 @@
-define b str;
-
-read b;
-
-write "Your user input is: " (b);

@@ -1,10 +1,15 @@
 #!/bin/lua
 
+
+--[=[ START General purpose functions ]=]--
+
+-- Terminate the process and print the given message.
 local function kill(m)
 	print(m)
 	os.exit()
 end
 
+-- Split a string into a table by a character.
 local function split(str, splitChar)
 	local resultSplit = {}
         if splitChar == nil then
@@ -18,23 +23,34 @@ local function split(str, splitChar)
         return resultSplit
 end
 
-
-local Source = ""
-
-local filenameparts = split(arg[1], ".")
-if filenameparts[#filenameparts] ~= "wdj" then
-	kill("wedjat-exec expects files of type \".wdj\"")
+-- Get the data type of the given argument text.
+local dataTypeIdentifiers = {
+	["\""] = "str",
+	[":"] = "int",
+	["*"] = "bol",
+	["["] = "arr",
+	["{"] = "blk",
+	["("] = "var",
+	["|"] = "arg"
+}
+local function GetDataType(argument)
+	local Id = string.sub(argument, 1, 1)
+	if dataTypeIdentifiers[Id] ~= nil then
+		return dataTypeIdentifiers[Id]
+	else
+		return "str"
+	end
 end
 
-local file = io.open(arg[1], "r")
-if file then
-	Source = file:read("*all")
-	file:close()
-else
-	kill("File not found: " .. arg[1])
-end
+--[=[ END General purpose functions ]=]--
 
 
+
+
+
+--[=[ START Cleaning and Formatting ]=]--
+
+-- Remove comments and unneccessary newlines, tabs, etc from the inputted text.
 local function CleanJunk(text)
 	local final = ""
 
@@ -95,6 +111,7 @@ local function CleanJunk(text)
 	return final
 end
 
+-- Remove leading and trailing whitespace from the inputted text.
 local function FinalTrim(text)
 	local final = ""
 
@@ -125,6 +142,7 @@ local function FinalTrim(text)
 
 	return final
 end
+
 
 local function SplitStatements(text)
 	local sl = {}
@@ -166,25 +184,8 @@ local function SplitStatements(text)
 	return sl
 end
 
-local dataTypeIdentifiers = {
-	["\""] = "str",
-	[":"] = "int",
-	["*"] = "bol",
-	["["] = "arr",
-	["{"] = "blk",
-	["("] = "var",
-	["|"]  = "arg"
-}
-local function GetDataType(argument)
-	local Id = string.sub(argument, 1, 1)
-	if dataTypeIdentifiers[Id] ~= nil then
-		return dataTypeIdentifiers[Id]
-	else
-		return "str"
-	end
-end
-
-local function getInfo(statement)
+-- Return a formatted table containing all information of a statement
+local function getStatementInfo(statement)
 	local argstart = 1
 	local c = ""
 	while argstart <= #statement do
@@ -254,42 +255,44 @@ local function getInfo(statement)
 	}
 end
 
+-- Format all statements and put them into a big list
 local function formatStatements(statements)
 	local formatted = {}
 
 	for _,statement in ipairs(statements) do
-		table.insert(formatted, getInfo(statement))
+		table.insert(formatted, getStatementInfo(statement))
 	end
 
 	return formatted
 end
 
+--[=[ END Cleaning and Formatting ]=]--
 
 
 
 
 
+--[=[ START Command execution, management, and variable management ]=]--
 
-local CleanSource = CleanJunk(Source)
-local SuperCleanSource = FinalTrim(CleanSource)
-local Statements = SplitStatements(SuperCleanSource)
-local InstructionSheet = formatStatements(Statements)
-
+-- List containing all variables stored in the program.
 local WedjatProgramVariables = {
 	["__VER"] = {
 		["Name"] = "__VER",
 		["Type"] = "str",
-		["Content"] = "__VER"
+		["Content"] = "super alpha"
 	}
 }
 
+-- List containing commands created by the user with the `command` command
 local WedjatUserCommands = {}
 
+-- List containing all arguments passed to the wedjat program on execution
 local WedjatProgramArguments = {}
 for i = 2, #arg do
 	table.insert(WedjatProgramArguments, arg[i])
 end
 
+-- Little function to check if a variable exists by name
 local function cv(v)
 	if WedjatProgramVariables[v] == nil then
 		return false
@@ -298,7 +301,16 @@ local function cv(v)
 	end
 end
 
+-- Little function to check if variable type
+local function cvt(v)
+	if WedjatProgramVariables[v] ~= nil then
+		return WedjatProgramVariables[v].Type
+	else
+		return nil
+	end
+end
 
+-- Convert string, integer, and boolean command arguments to their lua equivalents.
 local function argumentToLuaObject(Argument)
 	if Argument.Type == "str" then
 		if string.sub(Argument.Content, 1, 1) == "\"" then
@@ -307,7 +319,7 @@ local function argumentToLuaObject(Argument)
 			return Argument.Content
 		end
 	elseif Argument.Type == "int" then
-		return tonumber(string.sub(Argument.Content, 2, Argumemt.Content - 1))
+		return tonumber(string.sub(Argument.Content, 2, #Argument.Content - 1))
 	elseif Argument.Type == "bol" then
 		if Argument.Content == "*True*" then
 			return true
@@ -319,8 +331,11 @@ local function argumentToLuaObject(Argument)
 	end
 end
 
-
+-- Bigass list of every core wedjat command.
 local WedjatCoreCommands = {
+	-- define. Define a variable and create storage for it.
+	-- Usage: define <variable name> <data type (str, int, bol, arr, blk)>;
+	-- Example: define myString str; define myNumber int;
 	["define"] = function(Arguments)
 		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
 			kill("define: String arguments expected.")
@@ -344,6 +359,9 @@ local WedjatCoreCommands = {
 
 		WedjatProgramVariables[variableName] = {["Name"] = variableName, ["Type"] = variableType, ["Content"] = ""}
 	end,
+	-- set. Set the contents of a variable to something.
+	-- Usage: set <variable name> <data>;
+	-- Example: set myString coolio; set myString "ooga booga"; set myNumber :420:;
 	["set"] = function(Arguments)
 		if Arguments[1].Type ~= "str" then
 			kill("set: String arguments expected.")
@@ -362,6 +380,9 @@ local WedjatCoreCommands = {
 
 		variableObject.Content = Arguments[2].Content
 	end,
+	-- write. Write all string, integer, and boolean arguments to the standard output as text.
+	-- Usage: write <data>;
+	-- Example: write "My string is " (myString); write ooooogaaaaaa; write *True*;
 	["write"] = function(Arguments)
 		for _,argument in ipairs(Arguments) do
 			if argument.Type == "str" then
@@ -375,6 +396,9 @@ local WedjatCoreCommands = {
 			end
 		end
 	end,
+	-- read. Read string input from stdin and store it in a variable.
+	-- Usage: read <variable name>;
+	-- Example: read myString;
 	["read"] = function(Arguments)
 		if Arguments[1].Type ~= "str" then
 			kill("read: String argument expected.")
@@ -387,32 +411,68 @@ local WedjatCoreCommands = {
 		if variableObject.Type ~= "str" then
 			kill("read: Variable supplied is expected to be compatable with string data.")
 		end
-		variableObject.Content = tostring(io.read("*l"))
+		variableObject.Content = tostring(io.read("*a"))
 	end,
-	["gettype"] = function(Arguments)
+	-- type. Gets the type of the data inputted and stores it in string representation in the given variale.
+	-- Usage: type <variable name> <data>;
+	-- Example: type DataType "this is a string"; type DataType :69:; (makes DataType hold "str" // makes DataType hold "int")
+	["type"] = function(Arguments)
 		if WedjatProgramVariables[Arguments[1].Content] == nil or WedjatProgramVariables[Arguments[1].Content].Type ~= "str" or Arguments[2] == nil then
 			kill("gettype: Invalid arguments.")
 		end
 
 		WedjatProgramVariables[Arguments[1].Content].Content = Arguments[2].Type
 	end,
+	-- math. Write the final value of the given math expression into the variable provided.
+	-- Each operator and number, parenthesis etc is meant to be a single argument.
+	-- Left parenthsis must be quoted, otherwise the interpreter will think they are variables.
+	-- Usage: math <equation, spread across arguments>;
+	-- Example: math myResult :1: + :1:; math myResult "(" :420: - :69: ) / 2;
 	["math"] = function(Arguments)
 		local equation = ""
 		local variableName = Arguments[1].Content
 		if cv(variableName) == false then
 			kill("math: Variable " .. variableName .. " does not exist.")
 		end
+		if cvt(variableName) ~= "int" then
+			kill("The variable " .. variableName .. " is not of type \"int\".")
+		end
+
+		local validOperators = {
+			["+"] = true,
+			["-"] = true,
+			["*"] = true,
+			["/"] = true,
+			["^"] = true,
+			["%"] = true,
+			["("] = true,
+			[")"] = true
+		}
+
 		local i = 2
 		while i <= #Arguments do
 			local argument = Arguments[i]
 			if argument.Type ~= "str" and argument.Type ~= "int" then
-				kill("math: String or integer arguments expected.")
+				kill("math: Only string and integer values are expected.")
 			end
+			local c = argumentToLuaObject(argument)
+			if type(c) == "string" then
+				if validOperators[c] ~= true then
+					kill("math: Unexpected operator " .. c)
+				end
+			elseif type(c) == "number" then
+				c = tostring(c)
+			end
+			equation = equation .. c
 			i = i + 1
+		end
+
+		local f, e = load("return " .. equation)
+		if f then
+			WedjatProgramVariables[variableName].Content = ":" .. f() .. ":"
 		end
 	end
 }
-
 
 
 local function runCommand(command)
@@ -430,10 +490,53 @@ local function runCommand(command)
 	end
 end
 
+--[=[ START Command execution, management, and variable management ]=]--
+
+
+
+
+
+--[=[ START Actually running stuff ]=]--
+
+local Source = ""
+
+local filenameparts = split(arg[1], ".")
+if filenameparts[#filenameparts] ~= "wdj" then
+	kill("wedjat-exec expects files of type \".wdj\"")
+end
+
+local file = io.open(arg[1], "r")
+if file then
+	Source = file:read("*all")
+	file:close()
+else
+	kill("File not found: " .. arg[1])
+end
+
+
+local CleanSource = CleanJunk(Source)
+local SuperCleanSource = FinalTrim(CleanSource)
+local Statements = SplitStatements(SuperCleanSource)
+local InstructionSheet = formatStatements(Statements)
+
+for _,i in ipairs(InstructionSheet) do
+	runCommand(i)
+end
+
+--[=[ END Actually running stuff ]=]--
+
+
+
+
+
+
+
+
+
 
 
 --[=[ Developer Debugging Functions ]=]--
-
+--[=[
 local function printStatements()
 	local i = 1
 	for _,s in pairs(Statements) do
@@ -459,9 +562,3 @@ end
 
 -- printProgramCommands()
 --[=[ Developer Debugging Functions ]=]--
-
-
-
-for _,i in ipairs(InstructionSheet) do
-	runCommand(i)
-end

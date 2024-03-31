@@ -1,0 +1,12 @@
+define result int;
+define one int;
+define two int;
+
+set one :1:;
+set two :2:;
+
+> :: Around something means its an int.
+
+math result "(" (one) + (two) + :1: ) * :2:;
+
+write (result);
