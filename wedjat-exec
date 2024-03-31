@@ -1,13 +1,37 @@
 #!/bin/lua
 
+local function kill(m)
+	print(m)
+	os.exit()
+end
+
+local function split(str, splitChar)
+	local resultSplit = {}
+        if splitChar == nil then
+                splitChar = " "
+        end
+        if str and splitChar then
+                for part in string.gmatch(str, "([^"..splitChar.."]+)") do
+                        table.insert(resultSplit, part)
+                end
+        end
+        return resultSplit
+end
+
+
 local Source = ""
+
+local filenameparts = split(arg[1], ".")
+if filenameparts[#filenameparts] ~= "wdj" then
+	kill("wedjat-exec expects files of type \".wdj\"")
+end
 
 local file = io.open(arg[1], "r")
 if file then
 	Source = file:read("*all")
 	file:close()
 else
-	os.exit()
+	kill("File not found: " .. arg[1])
 end
 
 
@@ -246,7 +270,6 @@ end
 
 
 
-
 local CleanSource = CleanJunk(Source)
 local SuperCleanSource = FinalTrim(CleanSource)
 local Statements = SplitStatements(SuperCleanSource)
@@ -259,6 +282,7 @@ local WedjatProgramVariables = {
 		["Content"] = "__VER"
 	}
 }
+
 local WedjatUserCommands = {}
 
 local WedjatProgramArguments = {}
@@ -266,17 +290,24 @@ for i = 2, #arg do
 	table.insert(WedjatProgramArguments, arg[i])
 end
 
+local function cv(v)
+	if WedjatProgramVariables[v] == nil then
+		return false
+	else
+		return true
+	end
+end
 
 local WedjatCoreCommands = {
 	["define"] = function(Arguments)
 		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
-			return
+			kill("define: ")
 		end
 
 		local variableName = Arguments[1].Content
 		local variableType = Arguments[2].Content
 
-		if WedjatProgramVariables[variableName] then
+		if cv(variableName) == true then
 			return
 		end
 
@@ -298,8 +329,8 @@ local WedjatCoreCommands = {
 
 		local variableName = Arguments[1].Content
 		local variableObject
-		if WedjatProgramVariables[variableName] == nil then
-			return
+		if cv(variableName) == false then
+			kill("set: Variable " .. variableName .. " does not exist.")
 		end
 		variableObject = WedjatProgramVariables[variableName]
 
@@ -336,12 +367,14 @@ local WedjatCoreCommands = {
 		end
 		variableObject.Content = tostring(io.read("*l"))
 	end,
-	["type"] = function(Arguments)
+	["gettype"] = function(Arguments)
 		if WedjatProgramVariables[Arguments[1].Content] == nil or WedjatProgramVariables[Arguments[1].Content].Type ~= "str" or Arguments[2] == nil then
 			return
 		end
 
 		WedjatProgramVariables[Arguments[1].Content].Content = Arguments[2].Type
+	end,
+	["math"] = function(Arguments)
 	end
 }
 
