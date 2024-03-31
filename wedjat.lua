@@ -45,7 +45,7 @@ local function CleanJunk(text)
 				i = i + 1
 				final = final .. c
 			end
-		elseif c == "\n" or c == "\t" and instring == false then
+		elseif c == "\n" or c == "\t" and instring ~= true then
 			lc = c
 			i = i + 1
 		elseif c == ">" then
@@ -335,6 +335,13 @@ local WedjatCoreCommands = {
 			return
 		end
 		variableObject.Content = tostring(io.read("*l"))
+	end,
+	["type"] = function(Arguments)
+		if WedjatProgramVariables[Arguments[1].Content] == nil or WedjatProgramVariables[Arguments[1].Content].Type ~= "str" or Arguments[2] == nil then
+			return
+		end
+
+		WedjatProgramVariables[Arguments[1].Content].Content = Arguments[2].Type
 	end
 }
 

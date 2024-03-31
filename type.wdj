@@ -1,0 +1,20 @@
+define arraytype str;
+define inttype str;
+define stringtype str;
+define blocktype str;
+define booltype str;
+
+type arraytype [some, random, array];
+type inttype :69420:;
+type stringtype "some random string";
+type blocktype {write "this would be a code block"; write "yes, there is actually a code block datatype";};
+type booltype *True*;
+
+write "These are the types of all of my vars:
+
+";
+write arr- (arraytype);
+write int- (inttype);
+write str- (stringtype);
+write blk- (blocktype);
+write bol- (booltype);
