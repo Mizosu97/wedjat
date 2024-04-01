@@ -27,7 +27,7 @@ end
 local dataTypeIdentifiers = {
 	["\""] = "str",
 	[":"] = "int",
-	["*"] = "bol",
+	["'"] = "bol",
 	["["] = "arr",
 	["{"] = "blk",
 	["("] = "var",
@@ -190,7 +190,14 @@ local function getStatementInfo(statement)
 	local c = ""
 	while argstart <= #statement do
 		c = string.sub(statement, argstart, argstart)
-		argstart = argstart + 1
+		if argstart == #statement then
+			return {
+				["CommandName"] = statement,
+				["Arguments"] = {}
+			}
+		else
+			argstart = argstart + 1
+		end
 		if c == " " then
 			break
 		end
@@ -321,9 +328,9 @@ local function argumentToLuaObject(Argument)
 	elseif Argument.Type == "int" then
 		return tonumber(string.sub(Argument.Content, 2, #Argument.Content - 1))
 	elseif Argument.Type == "bol" then
-		if Argument.Content == "*True*" then
+		if Argument.Content == "'True'" then
 			return true
-		elseif Argument.Content == "*False*" then
+		elseif Argument.Content == "'False'" then
 			return false
 		end
 	else
@@ -382,7 +389,7 @@ local WedjatCoreCommands = {
 	end,
 	-- write. Write all string, integer, and boolean arguments to the standard output as text.
 	-- Usage: write <data>;
-	-- Example: write "My string is " (myString); write ooooogaaaaaa; write *True*;
+	-- Example: write "My string is " (myString); write ooooogaaaaaa; write 'True';
 	["write"] = function(Arguments)
 		for _,argument in ipairs(Arguments) do
 			if argument.Type == "str" then
@@ -395,6 +402,12 @@ local WedjatCoreCommands = {
 				io.write(string.sub(argument.Content, 2, #argument.Content - 1))
 			end
 		end
+	end,
+	-- newline. Write a newline.
+	-- Usage: newline
+	["newline"] = function(Arguments)
+		print("new")
+		io.write("\n")
 	end,
 	-- read. Read string input from stdin and store it in a variable.
 	-- Usage: read <variable name>;
@@ -411,7 +424,7 @@ local WedjatCoreCommands = {
 		if variableObject.Type ~= "str" then
 			kill("read: Variable supplied is expected to be compatable with string data.")
 		end
-		variableObject.Content = tostring(io.read("*a"))
+		variableObject.Content = tostring(io.read())
 	end,
 	-- type. Gets the type of the data inputted and stores it in string representation in the given variale.
 	-- Usage: type <variable name> <data>;
@@ -471,6 +484,29 @@ local WedjatCoreCommands = {
 		if f then
 			WedjatProgramVariables[variableName].Content = ":" .. f() .. ":"
 		end
+	end,
+	["strcat"] = function(Arguments)
+		if Arguments[1].Type ~= "str" then
+			kill("strcat: String arguments expected.")
+		end
+		local variableName = Arguments[1].Content
+		if cv(variableName) == false then
+			kill("strcat: Variable " .. variableName .. " does not exist.")
+		end
+		if cvt(variableName) ~= "str" then
+			kill("strcat: String variable expected.")
+		end
+		local final = ""
+		local i = 2
+		while i <= #Arguments do
+			local argument = Arguments[i]
+			if argument.Type ~= "str" then
+				kill("strcat: String arguments expected.")
+			end
+			final = final .. argument.Content
+			i = i + 1
+		end
+		WedjatProgramArguments[variableName].Content = final
 	end
 }
 
@@ -559,6 +595,6 @@ local function printProgramCommands()
 	end
 end
 
-
+printProgramCommands()
 -- printProgramCommands()
 --[=[ Developer Debugging Functions ]=]--

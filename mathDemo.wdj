@@ -1,12 +1,10 @@
-define result int;
-define one int;
-define two int;
+define first str;
+define second str;
+define operator str;
 
-set one :1:;
-set two :2:;
 
-> :: Around something means its an int.
+write "Enter the first number: ";
+newline;
+read first;
 
-math result "(" (one) + (two) + :1: ) * :2:;
-
-write (result);
+write (first);
