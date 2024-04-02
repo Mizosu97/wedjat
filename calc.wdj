@@ -1,0 +1,28 @@
+define firstNumberInput str;
+define secondNumberInput str;
+
+define firstNumber int;
+define secondNumber int;
+
+define operator str;
+
+define result int;
+
+
+write "Enter the first number:\n\n> ";
+read firstNumberInput;
+
+write "\nEnter the second number:\n\n> ";
+read secondNumberInput;
+
+write "\nEnter the operator (+, -, *, /)\n\n> ";
+read operator;
+
+
+toint firstNumber (firstNumberInput);
+toint secondNumber (secondNumberInput);
+
+
+math result (firstNumber) (operator) (secondNumber);
+
+write "\n\nAnswer: " (result);

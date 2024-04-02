@@ -1,5 +1,0 @@
-define s str;
-
-strcat s jone sy;
-
-write (s);

@@ -88,7 +88,7 @@ local function CleanJunk(text)
 		elseif c == "\n" or c == "\t" and instring ~= true then
 			lc = c
 			i = i + 1
-		elseif c == ">" then
+		elseif c == ">" and instring == false then
 			if instring == false then
 				local li = i
 				local lch = ""
@@ -334,9 +334,11 @@ local function argumentToLuaObject(Argument)
 			return false
 		end
 	else
-		return nil
+		return tostring(Argument.Content)
 	end
 end
+
+local runCommand
 
 -- Bigass list of every core wedjat command.
 local WedjatCoreCommands = {
@@ -391,23 +393,21 @@ local WedjatCoreCommands = {
 	-- Usage: write <data>;
 	-- Example: write "My string is " (myString); write ooooogaaaaaa; write 'True';
 	["write"] = function(Arguments)
+		local output = ""
 		for _,argument in ipairs(Arguments) do
 			if argument.Type == "str" then
 				if string.sub(argument.Content, 1, 1) == "\"" then
-					io.write(string.sub(argument.Content, 2, #argument.Content - 1))
+					output = output .. string.sub(argument.Content, 2, #argument.Content - 1)
 				else
-					io.write(argument.Content)
+					output = output .. argument.Content
 				end
 			elseif argument.Type == "int" or argument.Type == "bol" then
-				io.write(string.sub(argument.Content, 2, #argument.Content - 1))
+				output = output .. string.sub(argument.Content, 2, #argument.Content - 1)
 			end
 		end
-	end,
-	-- newline. Write a newline.
-	-- Usage: newline
-	["newline"] = function(Arguments)
-		print("new")
-		io.write("\n")
+		output = output:gsub("\\n", "\n")
+		output = output:gsub("\\t", "\t")
+		io.write(output)
 	end,
 	-- read. Read string input from stdin and store it in a variable.
 	-- Usage: read <variable name>;
@@ -503,15 +503,41 @@ local WedjatCoreCommands = {
 			if argument.Type ~= "str" then
 				kill("strcat: String arguments expected.")
 			end
-			final = final .. argument.Content
+			final = final .. argumentToLuaObject(argument)
 			i = i + 1
 		end
-		WedjatProgramArguments[variableName].Content = final
+		WedjatProgramVariables[variableName].Content = "\"" .. final .. "\""
+	end,
+	["tostr"] = function(Arguments)
+		local variableName = argumentToLuaObject(Arguments[1])
+		if cv(variableName) == false then
+			kill("tostr: Variable " .. variableName .. " does not exist.")
+		end
+		if cvt(variableName) ~= "str" then
+			kill("tostr: Variable " .. variableName .. " is not of type str.")
+		end
+		if Arguments[2] == nil then
+			kill("tostr: No data supplied for conversion.")
+		end
+		WedjatProgramVariables[variableName].Content = tostring(argumentToLuaObeject(Arguments[2]))
+	end,
+	["toint"] = function(Arguments)
+		local variableName = argumentToLuaObject(Arguments[1])
+		if cv(variableName) == false then
+			kill("toint: Variable " .. variableName .. " does not exist.") 
+		end
+		if cvt(variableName) ~= "int" then
+			kill("toint: Variable " .. variableName .. " is not of type int.")
+		end
+		if Arguments[2] == nil then
+			kill("toint: No data supplied for conversion.")
+		end
+		WedjatProgramVariables[variableName].Content = ":" .. argumentToLuaObject(Arguments[2]) .. ":"
 	end
 }
 
 
-local function runCommand(command)
+runCommand = function(command)
 	local CommandName = command.CommandName
 	local Arguments = command.Arguments
 	for _,argument in pairs(Arguments) do
