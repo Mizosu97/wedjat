@@ -1,0 +1,10 @@
+define one str;
+define two str;
+define final str;
+
+set one Hello;
+set two Vinegar!!;
+
+strcat final (one) " " (two) :420:;
+
+write "This is a cool phrase: " (final);

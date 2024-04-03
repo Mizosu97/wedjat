@@ -4,8 +4,16 @@
 --[=[ START General purpose functions ]=]--
 
 -- Terminate the process and print the given message.
-local function kill(m)
+local function kill(m, as)
 	print(m)
+	print("Arguments:")
+	local i = 1
+	if as ~= nil and type(as) == "table" then
+		for _,a in ipairs(as) do
+			print("\tArg" .. i .. " (" .. a.Type.. "): " .. a.Content)
+			i = i + 1
+		end
+	end
 	os.exit()
 end
 
@@ -346,15 +354,18 @@ local WedjatCoreCommands = {
 	-- Usage: define <variable name> <data type (str, int, bol, arr, blk)>;
 	-- Example: define myString str; define myNumber int;
 	["define"] = function(Arguments)
+		if #Arguments ~= 2 then
+			kill("define: 2 arguments are expected.", Arguments)
+		end
 		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
-			kill("define: String arguments expected.")
+			kill("define: All arguments are expected to be of value str.", Arguments)
 		end
 
 		local variableName = Arguments[1].Content
 		local variableType = Arguments[2].Content
 
 		if cv(variableName) == true then
-			kill("define: Variable " .. variableName .. " is already defined.")
+			kill("define: Variable " .. variableName .. " is already defined.", Arguments)
 		end
 
 		if variableType ~= "str"
@@ -363,7 +374,7 @@ local WedjatCoreCommands = {
 		and variableType ~= "bol"
 		and variableType ~= "blk"
 		then
-			kill("define: Unknown variable type \"" .. variableType .. "\" supplied.")
+			kill("define: Unknown type \"" .. variableType .. "\" supplied for variable definition.", Arguments)
 		end
 
 		WedjatProgramVariables[variableName] = {["Name"] = variableName, ["Type"] = variableType, ["Content"] = ""}
@@ -372,19 +383,22 @@ local WedjatCoreCommands = {
 	-- Usage: set <variable name> <data>;
 	-- Example: set myString coolio; set myString "ooga booga"; set myNumber :420:;
 	["set"] = function(Arguments)
+		if #Arguments ~= 2 then
+			kill("set: 2 arguments are expected.", Arguments)
+		end
 		if Arguments[1].Type ~= "str" then
-			kill("set: String arguments expected.")
+			kill("set: First argument is expected to be of type str.", Arguments)
 		end
 
 		local variableName = Arguments[1].Content
 		local variableObject
 		if cv(variableName) == false then
-			kill("set: Variable " .. variableName .. " does not exist.")
+			kill("set: Variable " .. variableName .. " does not exist.", Arguments)
 		end
 		variableObject = WedjatProgramVariables[variableName]
 
 		if Arguments[2].Type ~= variableObject.Type then
-			kill("set: Data type incompatability between variable specified and data supplied.")
+			kill("set: Data type of provided argument does not match data type of specified variable.", Arguments)
 		end
 
 		variableObject.Content = Arguments[2].Content
@@ -393,6 +407,9 @@ local WedjatCoreCommands = {
 	-- Usage: write <data>;
 	-- Example: write "My string is " (myString); write ooooogaaaaaa; write 'True';
 	["write"] = function(Arguments)
+		if #Arguments < 1 then
+			kill("write: At least one argument is expected.", nil)
+		end
 		local output = ""
 		for _,argument in ipairs(Arguments) do
 			if argument.Type == "str" then
@@ -403,6 +420,8 @@ local WedjatCoreCommands = {
 				end
 			elseif argument.Type == "int" or argument.Type == "bol" then
 				output = output .. string.sub(argument.Content, 2, #argument.Content - 1)
+			else
+				kill("write: All arguments must be of data type str, int, or bol.", Arguments)
 			end
 		end
 		output = output:gsub("\\n", "\n")
@@ -413,16 +432,19 @@ local WedjatCoreCommands = {
 	-- Usage: read <variable name>;
 	-- Example: read myString;
 	["read"] = function(Arguments)
+		if #Arguments ~= 1 then
+			kill("read: 1 argument is expected.", nil)
+		end
 		if Arguments[1].Type ~= "str" then
-			kill("read: String argument expected.")
+			kill("read: String argument expected.", Arguments)
 		end
 		local variableName = Arguments[1].Content
 		if cv(variableName) == false then
-			kill("read: Variable " .. variableName .. " does not exist.")
+			kill("read: Variable " .. variableName .. " does not exist.", Arguments)
 		end
 		local variableObject = WedjatProgramVariables[variableName]
 		if variableObject.Type ~= "str" then
-			kill("read: Variable supplied is expected to be compatable with string data.")
+			kill("read: Variable " .. variableName .. " is not of type str.", Arguments)
 		end
 		variableObject.Content = tostring(io.read())
 	end,
@@ -431,7 +453,22 @@ local WedjatCoreCommands = {
 	-- Example: type DataType "this is a string"; type DataType :69:; (makes DataType hold "str" // makes DataType hold "int")
 	["type"] = function(Arguments)
 		if WedjatProgramVariables[Arguments[1].Content] == nil or WedjatProgramVariables[Arguments[1].Content].Type ~= "str" or Arguments[2] == nil then
-			kill("gettype: Invalid arguments.")
+			kill("type: Invalid arguments.")
+		end
+
+		if #Arguments ~= 2 then
+			kill("type: 2 arguments are expected.", Arguments)
+		end
+		if Arguments[1].Type ~= "str" or Arguments[2].Type ~= "str" then
+			kill("type: All arguments must be of data type str.", Arguments)
+		end
+
+		local variableName = Arguments[1].Content
+		if cv(variableName) == false then
+			kill("type: Variable " .. variableName .. " does not exist.", Arguments)
+		end
+		if cvt(variableName) ~= "str" then
+			kill("type: Variable " .. variableName .. " is not of type str.", Arguments)
 		end
 
 		WedjatProgramVariables[Arguments[1].Content].Content = Arguments[2].Type
@@ -443,12 +480,15 @@ local WedjatCoreCommands = {
 	-- Example: math myResult :1: + :1:; math myResult "(" :420: - :69: ) / 2;
 	["math"] = function(Arguments)
 		local equation = ""
+		if #Arguments < 2 then
+			kill("math: At least 2 arguments are expected.", Arguments)
+		end
 		local variableName = Arguments[1].Content
 		if cv(variableName) == false then
-			kill("math: Variable " .. variableName .. " does not exist.")
+			kill("math: Variable " .. variableName .. " does not exist.", Arguments)
 		end
 		if cvt(variableName) ~= "int" then
-			kill("The variable " .. variableName .. " is not of type \"int\".")
+			kill("math: The variable " .. variableName .. " is not of type int.", Arguments)
 		end
 
 		local validOperators = {
@@ -466,12 +506,12 @@ local WedjatCoreCommands = {
 		while i <= #Arguments do
 			local argument = Arguments[i]
 			if argument.Type ~= "str" and argument.Type ~= "int" then
-				kill("math: Only string and integer values are expected.")
+				kill("math: Only string and integer values are expected.", Arguments)
 			end
 			local c = argumentToLuaObject(argument)
 			if type(c) == "string" then
 				if validOperators[c] ~= true then
-					kill("math: Unexpected operator " .. c)
+					kill("math: Unexpected operator " .. c, Arguments)
 				end
 			elseif type(c) == "number" then
 				c = tostring(c)
@@ -487,21 +527,21 @@ local WedjatCoreCommands = {
 	end,
 	["strcat"] = function(Arguments)
 		if Arguments[1].Type ~= "str" then
-			kill("strcat: String arguments expected.")
+			kill("strcat: String arguments expected.", Arguments)
 		end
 		local variableName = Arguments[1].Content
 		if cv(variableName) == false then
-			kill("strcat: Variable " .. variableName .. " does not exist.")
+			kill("strcat: Variable " .. variableName .. " does not exist.", Arguments)
 		end
 		if cvt(variableName) ~= "str" then
-			kill("strcat: String variable expected.")
+			kill("strcat: The variable " .. variableName .. " is not of type str.", Arguments)
 		end
 		local final = ""
 		local i = 2
 		while i <= #Arguments do
 			local argument = Arguments[i]
 			if argument.Type ~= "str" then
-				kill("strcat: String arguments expected.")
+				kill("strcat: String arguments expected.", Arguments)
 			end
 			final = final .. argumentToLuaObject(argument)
 			i = i + 1
@@ -511,26 +551,26 @@ local WedjatCoreCommands = {
 	["tostr"] = function(Arguments)
 		local variableName = argumentToLuaObject(Arguments[1])
 		if cv(variableName) == false then
-			kill("tostr: Variable " .. variableName .. " does not exist.")
+			kill("tostr: Variable " .. variableName .. " does not exist.", Arguments)
 		end
 		if cvt(variableName) ~= "str" then
-			kill("tostr: Variable " .. variableName .. " is not of type str.")
+			kill("tostr: Variable " .. variableName .. " is not of type str.", Arguments)
 		end
 		if Arguments[2] == nil then
-			kill("tostr: No data supplied for conversion.")
+			kill("tostr: No data supplied for conversion.", Arguments)
 		end
 		WedjatProgramVariables[variableName].Content = tostring(argumentToLuaObeject(Arguments[2]))
 	end,
 	["toint"] = function(Arguments)
 		local variableName = argumentToLuaObject(Arguments[1])
 		if cv(variableName) == false then
-			kill("toint: Variable " .. variableName .. " does not exist.") 
+			kill("toint: Variable " .. variableName .. " does not exist.", Arguments) 
 		end
 		if cvt(variableName) ~= "int" then
-			kill("toint: Variable " .. variableName .. " is not of type int.")
+			kill("toint: Variable " .. variableName .. " is not of type int.", Arguments)
 		end
 		if Arguments[2] == nil then
-			kill("toint: No data supplied for conversion.")
+			kill("toint: No data supplied for conversion.", Arguments)
 		end
 		WedjatProgramVariables[variableName].Content = ":" .. argumentToLuaObject(Arguments[2]) .. ":"
 	end
