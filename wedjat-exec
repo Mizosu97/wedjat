@@ -346,6 +346,22 @@ local function argumentToLuaObject(Argument)
 	end
 end
 
+local wedjatOpsToLua = {
+	["="] = "==",
+	["&"] = "and",
+	["/"] = "or",
+	["("] = "("
+}
+local function argsToLuaExpression(args)
+	local expression = ""
+	for _,a in ipairs(args) do
+		local al = argumentToLuaObject(a)
+		if type(al) == "string" then
+			al = "\"" .. al "\""
+		end
+	end
+end
+
 local runCommand
 
 -- Bigass list of every core wedjat command.
@@ -573,6 +589,9 @@ local WedjatCoreCommands = {
 			kill("toint: No data supplied for conversion.", Arguments)
 		end
 		WedjatProgramVariables[variableName].Content = ":" .. argumentToLuaObject(Arguments[2]) .. ":"
+	end,
+	["if"] = function(Arguments)
+
 	end
 }
 
