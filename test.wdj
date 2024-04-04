@@ -12,8 +12,8 @@ define UserInput str;
 set MyNumber :420:;
 set MyString "This is my string.";
 set MyOtherString    yayaya;
-set MyBool *True*;
-set MyArray [:69:, sss, *False*];
+set MyBool 'True';
+set MyArray [:69:, sss, 'False'];
 set MyBlock {
 	write yayattata\n;
 	read UserInput;

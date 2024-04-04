@@ -1,0 +1,18 @@
+define fi str;
+define si str;
+
+define f int;
+define s int;
+
+write "Enter two numbers.\n\n";
+write "> ";
+read fi;
+write "\n> ";
+read si;
+
+toint f (fi);
+toint s (si);
+
+if (f) = (s) {
+	write "They're equal!!!\nf value: " (f) "\ns value: " (s);
+};

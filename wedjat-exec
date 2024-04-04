@@ -350,19 +350,35 @@ local wedjatOpsToLua = {
 	["="] = "==",
 	["&"] = "and",
 	["/"] = "or",
-	["("] = "("
+	["("] = "(",
+	[")"] = ")"
 }
 local function argsToLuaExpression(args)
 	local expression = ""
 	for _,a in ipairs(args) do
 		local al = argumentToLuaObject(a)
-		if type(al) == "string" then
-			al = "\"" .. al "\""
+		if type(al) == "string" and wedjatOpsToLua[al] == nil then
+			al = "\"" .. al .. "\""
 		end
+		if wedjatOpsToLua[al] ~= nil then
+			al = wedjatOpsToLua[al]
+		end
+		expression = expression .. al
 	end
+	return expression
+end
+
+local function testLuaExpression(expression)
+	local result
+	local f, e = load("return (" .. expression .. ")")
+	if f then
+		result = f()
+	end
+	return result
 end
 
 local runCommand
+local runBlock
 
 -- Bigass list of every core wedjat command.
 local WedjatCoreCommands = {
@@ -590,8 +606,31 @@ local WedjatCoreCommands = {
 		end
 		WedjatProgramVariables[variableName].Content = ":" .. argumentToLuaObject(Arguments[2]) .. ":"
 	end,
+	["runblock"] = function(Arguments)
+		if #Arguments ~= 1 then
+			kill("runblock: One argument expected.", Arguments)
+		end
+		if Arguments[1].Type ~= "blk" then
+			kill("runblock: Arguments are expected to be of type blk.", Arguments)
+		end
+		runBlock(Arguments[1].Content)
+	end,
 	["if"] = function(Arguments)
-
+		if #Arguments < 2 then
+			kill("if: At least two arguments are expected.", Arguments)
+		end
+		if Arguments[#Arguments].Type ~= "blk" then
+			kill("if: No argument of type blk was given.", Arguments)
+		end 
+		local expression = {}
+		for _,argument in ipairs(Arguments) do
+			if argument ~= Arguments[#Arguments] then
+				table.insert(expression, argument)
+			end
+		end
+		if testLuaExpression(argsToLuaExpression(expression)) == true then
+			runBlock(Arguments[#Arguments].Content)
+		end
 	end
 }
 
@@ -608,6 +647,12 @@ runCommand = function(command)
 
 	if WedjatCoreCommands[CommandName] ~= nil then
 		WedjatCoreCommands[CommandName](Arguments)
+	end
+end
+
+runBlock = function(block)
+	for _,statement in ipairs(formatStatements(SplitStatements(FinalTrim(CleanJunk(string.sub(block, 2, #block - 1)))))) do
+		runCommand(statement)
 	end
 end
 

@@ -1,0 +1,16 @@
+define myBlock blk;
+
+set myBlock {
+    define one str;
+    define two str;
+    define final str;
+
+    set one bahh;
+    set two bloo;
+
+    strcat final (one) " " (two);
+
+    write (final);
+};
+
+runblock (myBlock);
