@@ -631,6 +631,40 @@ local WedjatCoreCommands = {
 		if testLuaExpression(argsToLuaExpression(expression)) == true then
 			runBlock(Arguments[#Arguments].Content)
 		end
+	end,
+	["for"] = function(Arguments)
+		if #Arguments ~= 5 then
+			kill("for: 5 arguments are expected.", Arguments)
+		end
+		if Arguments[1].Type ~= "str" then
+			kill("for: Argument 1 is expected to be of type str.")
+		end
+		if Arguments[2].Type ~= "int" or Arguments[3].Type ~= "int" or Arguments[4].Type ~= "int" then
+			kill("for: Arguments 2, 3, and 4 are expected to be of type int.", Arguments)
+		end
+		if Arguments[5].Type ~= "blk" then
+			kill("for: Argument 5 is expected to be of type blk.")
+		end
+
+		local variableName = argumentToLuaObject(Arguments[1])
+		local loopStart = argumentsToLuaObject(Arguments[2])
+		local loopEnd = argumentsToLuaObject(Arguments[3])
+		local increment = argumentsToLuaObject(Arguments[4])
+		local codeBlock = Arguments[5].Content
+
+		if cv(variableName) ~= true then
+			kill("for: Variable " .. variableName .. " does not exist.", Arguments)
+		end
+		if cvt(variableName) ~= "int" then
+			kill("for: Variable " .. variableName .. " is not of type int.", Arguments)
+		end
+
+		WedjatProgramVariables[variableName].content = loopStart
+		while loopStart <= loopEnd do
+			runBlock(codeBlock)
+			loopStart = loopStart + increment
+			WedjatProgramVariables[variableName].content = loopStart
+		end
 	end
 }
 
