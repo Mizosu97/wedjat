@@ -1,0 +1,6 @@
+define i int;
+
+for i :1: :10: :1: {
+	sleep :1:;
+	write \n (i);
+};

@@ -606,6 +606,15 @@ local WedjatCoreCommands = {
 		end
 		WedjatProgramVariables[variableName].Content = ":" .. argumentToLuaObject(Arguments[2]) .. ":"
 	end,
+	["sleep"] = function(Arguments)
+		if #Arguments ~= 1 then
+			kill("sleep: Only one argument is expected.", Arguments)
+		end
+		if Arguments[1].Type ~= "int" then
+			kill("sleep: Argument is expected to be of type int.", Arguments)
+		end
+		os.execute("sleep " .. tostring(argumentToLuaObject(Arguments[1])))
+	end,
 	["runblock"] = function(Arguments)
 		if #Arguments ~= 1 then
 			kill("runblock: One argument expected.", Arguments)
@@ -647,9 +656,9 @@ local WedjatCoreCommands = {
 		end
 
 		local variableName = argumentToLuaObject(Arguments[1])
-		local loopStart = argumentsToLuaObject(Arguments[2])
-		local loopEnd = argumentsToLuaObject(Arguments[3])
-		local increment = argumentsToLuaObject(Arguments[4])
+		local loopStart = argumentToLuaObject(Arguments[2])
+		local loopEnd = argumentToLuaObject(Arguments[3])
+		local increment = argumentToLuaObject(Arguments[4])
 		local codeBlock = Arguments[5].Content
 
 		if cv(variableName) ~= true then
@@ -659,11 +668,11 @@ local WedjatCoreCommands = {
 			kill("for: Variable " .. variableName .. " is not of type int.", Arguments)
 		end
 
-		WedjatProgramVariables[variableName].content = loopStart
+		WedjatProgramVariables[variableName].Content = loopStart
 		while loopStart <= loopEnd do
 			runBlock(codeBlock)
 			loopStart = loopStart + increment
-			WedjatProgramVariables[variableName].content = loopStart
+			WedjatProgramVariables[variableName].Content = ":" .. tostring(loopStart) .. ":"
 		end
 	end
 }
