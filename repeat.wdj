@@ -1,0 +1,14 @@
+define input str;
+define number int;
+
+write "Please enter a number:\n\n> ";
+read input;
+toint number (input);
+
+repeat {
+	write (number) \n;
+	math number (number) - :1:;
+	if (number) = :0: {
+		break;
+	};
+};

@@ -379,6 +379,7 @@ end
 
 local runCommand
 local runBlock
+local LOOPRUNNING = false
 
 -- Bigass list of every core wedjat command.
 local WedjatCoreCommands = {
@@ -630,18 +631,37 @@ local WedjatCoreCommands = {
 		end
 		if Arguments[#Arguments].Type ~= "blk" then
 			kill("if: No argument of type blk was given.", Arguments)
-		end 
+		end
+		local flow = {}
 		local expression = {}
+		local elsemarker = false
 		for _,argument in ipairs(Arguments) do
-			if argument ~= Arguments[#Arguments] then
-				table.insert(expression, argument)
+			if then
+				if argument.Type == "blk" then
+					table.insert(flow, {expression, argument.Content})
+				elseif argument.Content == "else" then
+					elsemarker = true
+				else
+					table.insert(expression, argument)
+				end
+				if elsemarker == true then
+					table.insert(flow, {"else", argument.Content})
+				end
 			end
+		end
+		for _,pathway in ipairs(flow) do
+			if pathway[1] == "else" then
+				runBlock(pathway[2])
+				break
+			end
+
 		end
 		if testLuaExpression(argsToLuaExpression(expression)) == true then
 			runBlock(Arguments[#Arguments].Content)
 		end
 	end,
 	["for"] = function(Arguments)
+		LOOPRUNNING = true
 		if #Arguments ~= 5 then
 			kill("for: 5 arguments are expected.", Arguments)
 		end
@@ -669,11 +689,29 @@ local WedjatCoreCommands = {
 		end
 
 		WedjatProgramVariables[variableName].Content = loopStart
-		while loopStart <= loopEnd do
+		while loopStart <= loopEnd and LOOPRUNNING == true do
 			runBlock(codeBlock)
 			loopStart = loopStart + increment
 			WedjatProgramVariables[variableName].Content = ":" .. tostring(loopStart) .. ":"
 		end
+		LOOPRUNNING = false
+	end,
+	["repeat"] = function(Arguments)
+		LOOPRUNNING = true
+		local block = Arguments[1]
+		if not block or block.Type ~= "blk" then
+			kill("repeat: One argument is expected of type blk.")
+		end
+		while LOOPRUNNING == true do
+			runBlock(block.Content)
+		end
+		LOOPRUNNING = false
+	end,
+	["break"] = function(Arguments)
+		LOOPRUNNING = false
+	end,
+	["kill"] = function(Arguments)
+		os.exit()
 	end
 }
 
