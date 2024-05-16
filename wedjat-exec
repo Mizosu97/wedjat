@@ -380,6 +380,8 @@ end
 local runCommand
 local runBlock
 local LOOPRUNNING = false
+local ISCUSTOMCOMMAND = false
+local CustomCommandArguments = {}
 
 -- Bigass list of every core wedjat command.
 local WedjatCoreCommands = {
@@ -636,28 +638,27 @@ local WedjatCoreCommands = {
 		local expression = {}
 		local elsemarker = false
 		for _,argument in ipairs(Arguments) do
-			if then
-				if argument.Type == "blk" then
-					table.insert(flow, {expression, argument.Content})
-				elseif argument.Content == "else" then
-					elsemarker = true
-				else
-					table.insert(expression, argument)
-				end
-				if elsemarker == true then
-					table.insert(flow, {"else", argument.Content})
-				end
+			if argument.Type == "blk" then
+				table.insert(flow, {expression, argument.Content})
+				expression = {}
+			elseif argument.Content == "else" then
+				elsemarker = true
+			else
+				table.insert(expression, argument)
+			end
+			if elsemarker == true then
+				table.insert(flow, {"else", argument.Content})
 			end
 		end
 		for _,pathway in ipairs(flow) do
 			if pathway[1] == "else" then
 				runBlock(pathway[2])
 				break
+			elseif argsToLuaExpression(pathway[1]) == true then
+				runBlock(pathway[2])
+				break
 			end
 
-		end
-		if testLuaExpression(argsToLuaExpression(expression)) == true then
-			runBlock(Arguments[#Arguments].Content)
 		end
 	end,
 	["for"] = function(Arguments)
@@ -722,6 +723,9 @@ runCommand = function(command)
 	for _,argument in pairs(Arguments) do
 		if argument.Type == "var" then
 			argument.Content = WedjatProgramVariables[string.sub(argument.Content, 2, #argument.Content - 1)].Content
+			argument.Type = GetDataType(argument.Content)
+		elseif argument.Type == "flg" then
+			argument.Content = tostring(arg[tonumber(string.sub(argument.Content, 2, #argument.Content))])
 			argument.Type = GetDataType(argument.Content)
 		end
 	end

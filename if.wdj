@@ -1,18 +1,14 @@
-define fi str;
-define si str;
+define p int;
+define q int;
 
-define f int;
-define s int;
+set p :10:;
+set q :100:;
 
-write "Enter two numbers.\n\n";
-write "> ";
-read fi;
-write "\n> ";
-read si;
 
-toint f (fi);
-toint s (si);
-
-if (f) = (s) {
-	write "They're equal!!!\nf value: " (f) "\ns value: " (s);
+if (p) = :1: {
+	write "its 1";
+} (p) = :5: {
+	write "its 5";
+} else {
+	write idk;
 };
