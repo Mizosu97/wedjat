@@ -351,7 +351,8 @@ local wedjatOpsToLua = {
 	["&"] = "and",
 	["/"] = "or",
 	["("] = "(",
-	[")"] = ")"
+	[")"] = ")",
+	["#"] = "not"
 }
 local function argsToLuaExpression(args)
 	local expression = ""
@@ -639,22 +640,28 @@ local WedjatCoreCommands = {
 		local elsemarker = false
 		for _,argument in ipairs(Arguments) do
 			if argument.Type == "blk" then
+				if elsemarker == true then expression = "else" end
 				table.insert(flow, {expression, argument.Content})
 				expression = {}
 			elseif argument.Content == "else" then
 				elsemarker = true
 			else
 				table.insert(expression, argument)
-			end
-			if elsemarker == true then
-				table.insert(flow, {"else", argument.Content})
-			end
+			end	
 		end
 		for _,pathway in ipairs(flow) do
+			--[=[
+			io.write("exp: ")
+			for h,v in ipairs(pathway[1]) do
+				io.write(v.Content)
+			end
+			print("\n")
+			print("blk: " .. pathway[2])
+			]=]--
 			if pathway[1] == "else" then
 				runBlock(pathway[2])
 				break
-			elseif argsToLuaExpression(pathway[1]) == true then
+			elseif testLuaExpression(argsToLuaExpression(pathway[1])) == true then
 				runBlock(pathway[2])
 				break
 			end

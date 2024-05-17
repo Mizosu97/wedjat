@@ -1,16 +1,21 @@
-define myBlock blk;
+define s str;
+define n int;
 
-set myBlock {
-    define one str;
-    define two str;
-    define final str;
+write "
+Enter the number 1 or 5 to print the word equivalent.\n
+\n
+Anything else will print idk.\n
+\n
+> 
+";
 
-    set one bahh;
-    set two bloo;
+read s;
+toint n (s);
 
-    strcat final (one) " " (two);
-
-    write (final);
+if (n) = :1: {
+	write one;
+} (n) = :5: {
+	write five;
+} else {
+	write idk;
 };
-
-runblock (myBlock);
