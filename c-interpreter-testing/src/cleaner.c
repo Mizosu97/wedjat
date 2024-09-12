@@ -12,6 +12,7 @@ void p(int *c, int *lc, int *i, FILE *tmp)
 
 char *CleanSrc(char *src)
 {
+	printf("cleanedsrc function entered\n");
 	FILE *tmp = tmpfile();
 	if (tmp == NULL) {
 		printf("tmp goofed");
@@ -28,9 +29,13 @@ char *CleanSrc(char *src)
 
 	int i = 0;
 
-	while (i < len - 1) {
+	while (i < len - 1 ) {
 		c = src[i];
-		printf("%d: %c\n", i, c);
+		if (c == '\0') {
+			printf("end");
+			break;
+		}
+		printf("%d\t%c\n", i, c);
 		switch (c) {
 			case '\"':
 				if (lc != '\\') instring *= -1;
@@ -45,7 +50,11 @@ char *CleanSrc(char *src)
 				p(&c, &lc, &i, tmp);
 				break;
 			case ' ':
-				if (instring == 1) 
+				if (i == 0 || lc == ' ' || inarray == 1) {
+					lc = c;
+					i++;
+				} else p(&c, &lc, &i, tmp);
+
 				break;
 			case '\n':
 				if (instring == -1) {
@@ -78,6 +87,7 @@ char *CleanSrc(char *src)
 
 		}
 	}
+	printf("after loop");
 
 	char *final = ReadFile(tmp);
 	fclose(tmp);

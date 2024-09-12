@@ -13,7 +13,9 @@ int main(int argc, char **argv)
 
 	char *src = ReadFile(srcf);
 	char *csrc = CleanSrc(src);
+	free(src);
 
 	// Rest
 	printf("%s", csrc);
+	free(csrc);
 }

@@ -2,7 +2,7 @@
 #define utility
 
 
-char *ReadFile(char *path);
+char *ReadFile(FILE *fp);
 
 
 #endif
