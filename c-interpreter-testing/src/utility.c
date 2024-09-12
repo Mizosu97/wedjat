@@ -1,14 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *ReadFile(char *path)
+char *ReadFile(FILE *fp)
 {
-	// Open file
-        FILE *fp = fopen(path, "r");
-        if (fp == NULL) {
-                printf("File not found.");
-                exit(1);
-        }
 
         // Get file length
         fseek(fp, 0, SEEK_END);

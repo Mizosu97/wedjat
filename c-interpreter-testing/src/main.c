@@ -5,8 +5,15 @@
 
 int main(int argc, char **argv)
 {
-	char *src = ReadFile(argv[1]);
+	FILE *srcf = fopen(argv[1], "r");
+	if (srcf == NULL) {
+		printf("opening file goofed");
+		exit(1);
+	}
+
+	char *src = ReadFile(srcf);
+	char *csrc = CleanSrc(src);
 
 	// Rest
-	printf("%s", src);
+	printf("%s", csrc);
 }
